@@ -8,5 +8,10 @@ class Settings(BaseSettings):
     mongo_db_name: str = "aresep"
     slow_query_seconds: float = 2
 
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_ttl: int = 45
+
 
 settings = Settings()

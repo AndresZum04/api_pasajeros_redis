@@ -2,15 +2,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.cache.redis import check_redis_connection, redis_client
 from app.db.mongo import client
-from app.routes import pasajeros
+from app.routes import cache, pasajeros
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await client.admin.command("ping")
     print("MongoDB: conexión OK")
+    await check_redis_connection()
     yield
+    await redis_client.aclose()
     await client.close()
 
 
@@ -22,6 +25,7 @@ app = FastAPI(
 )
 
 app.include_router(pasajeros.router, prefix="/api")
+app.include_router(cache.router, prefix="/api")
 
 
 @app.get("/")
