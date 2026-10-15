@@ -37,7 +37,8 @@ async def get_resumen(codigo_ruta: str, anno: int) -> Optional[dict]:
         {"$match": {"codigo_ruta": codigo_ruta, "anno": anno}},
         {
             "$group": {
-                "_id": "$codigo_ramal",
+                "_id": None,
+                "ramales": {"$sum": 1},
                 "promedio": {
                     "$avg": {
                         "$add": [
@@ -49,17 +50,14 @@ async def get_resumen(codigo_ruta: str, anno: int) -> Optional[dict]:
             }
         },
     ]
-    ramales = await (await db.passengers.aggregate(pipeline)).to_list()
-
-    promedio = None
-    if ramales:
-        promedio = round(sum(r["promedio"] for r in ramales) / len(ramales), 2)
+    stats = await (await db.passengers.aggregate(pipeline)).to_list()
+    stats = stats[0] if stats else {}
 
     return {
         "codigo_ruta": codigo_ruta,
         "nombre_ruta": tarifas[0].get("nombre_ruta"),
         "anno_pasajeros": anno,
         "tarifas_vigentes": tarifas,
-        "ramales_considerados": len(ramales),
-        "promedio_pasajeros": promedio,
+        "ramales_considerados": stats.get("ramales", 0),
+        "promedio_pasajeros": round(stats["promedio"], 2) if stats else None,
     }
